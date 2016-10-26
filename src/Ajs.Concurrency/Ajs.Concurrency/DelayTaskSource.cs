@@ -7,7 +7,7 @@ namespace Ajs.Concurrency
     /// <summary>
     /// Creates Delayed Tasks which can be cancelled.
     /// </summary>
-    public class DelayTaskSource
+    public sealed class DelayTaskSource
     {
         private readonly CancellationToken _parentCancellationToken;
 
@@ -20,6 +20,10 @@ namespace Ajs.Concurrency
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_parentCancellationToken);
         }
 
+		/// <summary>
+		/// Wait a specified amount of time to pass or for
+		/// <see cref="Cancel"/> to be called,
+		/// </summary>
         public async Task Delay(TimeSpan delay)
         {
             try
@@ -32,6 +36,10 @@ namespace Ajs.Concurrency
             }
         }
 
+		/// <summary>
+		/// Stops all delays currently waiting and immediately executes
+		/// the continuations.
+		/// </summary>
         public void Cancel()
         {
             if (_parentCancellationToken.IsCancellationRequested)

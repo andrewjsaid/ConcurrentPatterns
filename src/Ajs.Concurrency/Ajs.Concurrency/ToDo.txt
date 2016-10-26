@@ -4,6 +4,8 @@
 		- Maybe this should be done through subclassing?
 
 - New Classes:
+	- RenewableCancellationTokenSource
+		- CancellationTokenSource with an option to renew it.
 	- LaneLocks
 		- When locking can be based on a single value, can be useful instead of locking by dictionary
 	- BackgroundTaskQueue

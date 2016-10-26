@@ -8,7 +8,7 @@ namespace Ajs.Concurrency.BackgroundActions
     /// <summary>
     /// Represents a callback which will run unless actively delayed or executed immediately.
     /// </summary>
-    public class SideJob
+    public sealed class SideJob
     {
         private const long IsRunning = long.MaxValue;
         private const long IsRunningWithReschedule = long.MaxValue - 1;
