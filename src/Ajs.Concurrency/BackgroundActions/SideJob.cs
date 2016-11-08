@@ -27,8 +27,11 @@ namespace Ajs.Concurrency.BackgroundActions
         }
 
         public SideJob(string name, Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
-        {
-            if (interval < TimeSpan.Zero) throw new InvalidOperationException("interval must not be a negative duration");
+		{
+			if (callback == null) throw new ArgumentNullException(nameof(callback));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			if (interval < TimeSpan.Zero) throw new InvalidOperationException("Interval must not be a negative duration");
 
             Name = name;
             Interval = interval;
@@ -235,7 +238,7 @@ namespace Ajs.Concurrency.BackgroundActions
 
                 await _callback(_cancellationToken);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when(_cancellationToken.IsCancellationRequested)
             {
                 // Do nothing - task was cancelled
             }
