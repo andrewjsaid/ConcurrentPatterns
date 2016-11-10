@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ajs.Concurrency.BackgroundActions
+namespace Ajs.Concurrency
 {
     /// <summary>
     /// Task-based approach to periodically running a
@@ -13,7 +13,7 @@ namespace Ajs.Concurrency.BackgroundActions
     /// interval between callbacks begins ticking
     /// when the last callback ended.
     /// </remarks>
-    public sealed class Poller
+    public sealed class AsyncPoller
     {
 
         private readonly Func<CancellationToken, Task> _callback;
@@ -23,17 +23,14 @@ namespace Ajs.Concurrency.BackgroundActions
 
         #region Construction
 
-        public Poller(string name, Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
-            : this(name, t => callback(), interval, cancellationToken) { }
+        public AsyncPoller(Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+            : this(t => callback(), interval, cancellationToken) { }
 
-        public Poller(string name, Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public AsyncPoller(Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
 		{
 			if (callback == null) throw new ArgumentNullException(nameof(callback));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			if (interval < TimeSpan.Zero) throw new InvalidOperationException("Interval must not be a negative duration");
-
-            Name = name;
+			if (interval < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(interval), "Interval must not be a negative duration");
+			
             Interval = interval;
             _callback = callback;
             _cancellationToken = cancellationToken;
@@ -45,24 +42,19 @@ namespace Ajs.Concurrency.BackgroundActions
         #region Properties
 
         /// <summary>
-        /// Name of the <see cref="Poller"/>
-        /// </summary>
-        public string Name { get; }
-
-        /// <summary>
         /// The duration between the end of one run
         /// and the start of the next.
         /// </summary>
         public TimeSpan Interval { get; }
 
         /// <summary>
-        /// Whether the <see cref="Poller"/> has already been started.
+        /// Whether the <see cref="AsyncPoller"/> has already been started.
         /// This occurs after any initial delay period.
         /// </summary>
         public bool IsStarted { get; private set; }
 
         /// <summary>
-        /// Whether the <see cref="Poller"/> is active, which
+        /// Whether the <see cref="AsyncPoller"/> is active, which
         /// includes the waiting interval between callbacks.
         /// </summary>
         public bool IsActive => IsStarted && !IsCompleted;
@@ -73,20 +65,20 @@ namespace Ajs.Concurrency.BackgroundActions
         public bool IsBusy { get; private set; }
 
         /// <summary>
-        /// Whether the <see cref="Poller"/> has completed and is
+        /// Whether the <see cref="AsyncPoller"/> has completed and is
         /// no longer active.
         /// </summary>
         public bool IsCompleted { get; private set; }
 
         /// <summary>
-        /// Whether the <see cref="Poller"/> has been cancelled.
+        /// Whether the <see cref="AsyncPoller"/> has been cancelled.
         /// </summary>
         public bool IsCancelled => _cancellationToken.IsCancellationRequested;
 
         /// <summary>
         /// Event to handle exceptions occuring on the background task.
         /// </summary>
-        public event BackgroundActionUnhandledExceptionEventHandler UnhandledException;
+        public event AsyncActionUnhandledExceptionEventHandler UnhandledException;
 
         #endregion
 
@@ -94,7 +86,7 @@ namespace Ajs.Concurrency.BackgroundActions
 
         /// <summary>
         /// Immediately stop waiting an interval.
-        /// If the <see cref="Poller"/> is not between callbacks, nothing happens.
+        /// If the <see cref="AsyncPoller"/> is not between callbacks, nothing happens.
         /// </summary>
         public void Wake()
         {
@@ -103,7 +95,7 @@ namespace Ajs.Concurrency.BackgroundActions
         }
 
         /// <summary>
-        /// Start the <see cref="Poller"/> after <paramref name="initialDelay"/>.
+        /// Start the <see cref="AsyncPoller"/> after <paramref name="initialDelay"/>.
         /// </summary>
         public void Start(TimeSpan initialDelay)
         {
@@ -147,6 +139,7 @@ namespace Ajs.Concurrency.BackgroundActions
                     catch (OperationCanceledException) when(_cancellationToken.IsCancellationRequested)
                     {
                         // Regular exit - task was cancelled
+	                    continue;
                     }
                     catch (Exception ex) when (TryHandle(ex))
                     {
@@ -180,7 +173,7 @@ namespace Ajs.Concurrency.BackgroundActions
 
         private bool TryHandle(Exception exception)
         {
-            var eventArgs = new BackgroundActionUnhandledExceptionEventArgs(exception);
+            var eventArgs = new AsyncActionUnhandledExceptionEventArgs(exception);
             UnhandledException?.Invoke(this, eventArgs);
             return eventArgs.Handled;
         }
@@ -190,41 +183,41 @@ namespace Ajs.Concurrency.BackgroundActions
         #region Static Construction
 
         /// <summary>
-        /// Get a new <see cref="Poller"/> which will start immediately.
+        /// Get a new <see cref="AsyncPoller"/> which will start immediately.
         /// </summary>
-        public static Poller StartNew(string name, Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public static AsyncPoller StartNew(Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
         {
-            var result = new Poller(name, callback, interval, cancellationToken);
+            var result = new AsyncPoller(callback, interval, cancellationToken);
             result.Start();
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="Poller"/> which will start immediately.
+        /// Get a new <see cref="AsyncPoller"/> which will start immediately.
         /// </summary>
-        public static Poller StartNew(string name, Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public static AsyncPoller StartNew(Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
         {
-            var result = new Poller(name, callback, interval, cancellationToken);
+            var result = new AsyncPoller(callback, interval, cancellationToken);
             result.Start();
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="Poller"/> which will start after a <paramref name="initialDelay"/>.
+        /// Get a new <see cref="AsyncPoller"/> which will start after a <paramref name="initialDelay"/>.
         /// </summary>
-        public static Poller StartDelayed(string name, Func<Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
+        public static AsyncPoller StartDelayed(Func<Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
         {
-            var result = new Poller(name, callback, interval, cancellationToken);
+            var result = new AsyncPoller(callback, interval, cancellationToken);
             result.Start(initialDelay);
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="Poller"/> which will start after a <paramref name="initialDelay"/>.
+        /// Get a new <see cref="AsyncPoller"/> which will start after a <paramref name="initialDelay"/>.
         /// </summary>
-        public static Poller StartDelayed(string name, Func<CancellationToken, Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
+        public static AsyncPoller StartDelayed(Func<CancellationToken, Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
         {
-            var result = new Poller(name, callback, interval, cancellationToken);
+            var result = new AsyncPoller(callback, interval, cancellationToken);
             result.Start(initialDelay);
             return result;
         }

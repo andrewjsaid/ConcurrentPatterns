@@ -3,12 +3,12 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ajs.Concurrency.BackgroundActions
+namespace Ajs.Concurrency
 {
     /// <summary>
     /// Represents a callback which will run unless actively delayed or executed immediately.
     /// </summary>
-    public sealed class SideJob
+    public sealed class AsyncJob
     {
         private const long IsRunning = long.MaxValue;
         private const long IsRunningWithReschedule = long.MaxValue - 1;
@@ -21,20 +21,17 @@ namespace Ajs.Concurrency.BackgroundActions
 
         #region Construction
 
-        public SideJob(string name, Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
-            : this(name, t => callback(), interval, cancellationToken)
+        public AsyncJob(Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+            : this(t => callback(), interval, cancellationToken)
         {
         }
 
-        public SideJob(string name, Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public AsyncJob(Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
 		{
 			if (callback == null) throw new ArgumentNullException(nameof(callback));
-			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (interval < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(interval), "Interval must not be a negative duration");
 
-			if (interval < TimeSpan.Zero) throw new InvalidOperationException("Interval must not be a negative duration");
-
-            Name = name;
-            Interval = interval;
+			Interval = interval;
             _callback = callback;
             _cancellationToken = cancellationToken;
             _delayTaskSource = new DelayTaskSource(cancellationToken);
@@ -43,12 +40,7 @@ namespace Ajs.Concurrency.BackgroundActions
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Name of the <see cref="SideJob"/>
-        /// </summary>
-        public string Name { get; }
-
+		
         /// <summary>
         /// The waiting duration between the last notification
         /// received to the background task being invoked.
@@ -61,20 +53,20 @@ namespace Ajs.Concurrency.BackgroundActions
         public bool IsBusy { get; private set; }
 
         /// <summary>
-        /// Whether the <see cref="SideJob"/> has completed and is
+        /// Whether the <see cref="AsyncJob"/> has completed and is
         /// no longer active.
         /// </summary>
         public bool IsCompleted => IsCancelled && !IsBusy;
 
         /// <summary>
-        /// Whether the <see cref="SideJob"/> has been cancelled.
+        /// Whether the <see cref="AsyncJob"/> has been cancelled.
         /// </summary>
         public bool IsCancelled => _cancellationToken.IsCancellationRequested;
 
         /// <summary>
         /// Event to handle exceptions occuring on the background task.
         /// </summary>
-        public event BackgroundActionUnhandledExceptionEventHandler UnhandledException;
+        public event AsyncActionUnhandledExceptionEventHandler UnhandledException;
 
         #endregion
 
@@ -320,7 +312,7 @@ namespace Ajs.Concurrency.BackgroundActions
 
         private bool TryHandle(Exception exception)
         {
-            var eventArgs = new BackgroundActionUnhandledExceptionEventArgs(exception);
+            var eventArgs = new AsyncActionUnhandledExceptionEventArgs(exception);
             UnhandledException?.Invoke(this, eventArgs);
             return eventArgs.Handled;
         }
@@ -330,41 +322,41 @@ namespace Ajs.Concurrency.BackgroundActions
         #region Static Construction
 
         /// <summary>
-        /// Get a new <see cref="SideJob"/> which will start after the specified delay.
+        /// Get a new <see cref="AsyncJob"/> which will start after the specified delay.
         /// </summary>
-        public static SideJob StartNew(string name, Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public static AsyncJob StartNew(Func<Task> callback, TimeSpan interval, CancellationToken cancellationToken)
         {
-            var result = new SideJob(name, callback, interval, cancellationToken);
+            var result = new AsyncJob(callback, interval, cancellationToken);
             result.Delay();
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="SideJob"/> which will start after the specified delay.
+        /// Get a new <see cref="AsyncJob"/> which will start after the specified delay.
         /// </summary>
-        public static SideJob StartNew(string name, Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
+        public static AsyncJob StartNew(Func<CancellationToken, Task> callback, TimeSpan interval, CancellationToken cancellationToken)
         {
-            var result = new SideJob(name, callback, interval, cancellationToken);
+            var result = new AsyncJob(callback, interval, cancellationToken);
             result.Delay();
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="SideJob"/> which will start after <paramref name="initialDelay"/>.
+        /// Get a new <see cref="AsyncJob"/> which will start after <paramref name="initialDelay"/>.
         /// </summary>
-        public static SideJob StartNew(string name, Func<Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
+        public static AsyncJob StartNew(Func<Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
         {
-            var result = new SideJob(name, callback, interval, cancellationToken);
+            var result = new AsyncJob(callback, interval, cancellationToken);
             result.Delay(initialDelay);
             return result;
         }
 
         /// <summary>
-        /// Get a new <see cref="SideJob"/> which will start after <paramref name="initialDelay"/>.
+        /// Get a new <see cref="AsyncJob"/> which will start after <paramref name="initialDelay"/>.
         /// </summary>
-        public static SideJob StartNew(string name, Func<CancellationToken, Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
+        public static AsyncJob StartNew(Func<CancellationToken, Task> callback, TimeSpan interval, TimeSpan initialDelay, CancellationToken cancellationToken)
         {
-            var result = new SideJob(name, callback, interval, cancellationToken);
+            var result = new AsyncJob(callback, interval, cancellationToken);
             result.Delay(initialDelay);
             return result;
         }

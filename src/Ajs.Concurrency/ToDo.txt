@@ -1,4 +1,4 @@
-﻿- SideJob & Poller:
+﻿- AsyncJob & AsyncPoller & AsyncTaskQueue:
 	- Figure out how best to unit test
 	- Cost vs Reward: Add CancellationTokenSource member variable to background actions to be able to expose .Cancel() property
 		- Maybe this should be done through subclassing?
@@ -8,7 +8,3 @@
 		- CancellationTokenSource with an option to renew it.
 	- LaneLocks
 		- When locking can be based on a single value, can be useful instead of locking by dictionary
-	- BackgroundTaskQueue
-		- Add tasks to the queue for them to be processed on a background thread
-		- Serves to reduce overhead from creating too many tasks, reduces pressure from the ThreadPool
-		- Allows controlling of groups of tasks as a whole (IsBusy, IsCompleted)
