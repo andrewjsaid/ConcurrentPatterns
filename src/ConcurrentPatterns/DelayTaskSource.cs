@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ajs.Concurrency
+namespace ConcurrentPatterns
 {
     /// <summary>
     /// Creates Delayed Tasks which can be cancelled.

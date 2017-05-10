@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Ajs.Concurrency
+namespace ConcurrentPatterns
 {
 	/// <summary>
 	/// Controls a resource for a limited amount of time.

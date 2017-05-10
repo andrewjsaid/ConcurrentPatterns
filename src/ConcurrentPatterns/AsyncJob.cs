@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ajs.Concurrency
+namespace ConcurrentPatterns
 {
     /// <summary>
     /// Represents a callback which will run unless actively delayed or executed immediately.

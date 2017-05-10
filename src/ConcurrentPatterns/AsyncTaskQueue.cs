@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Ajs.Concurrency
+namespace ConcurrentPatterns
 {
 	/// <summary>
 	/// Append-only queue of work items to be processed

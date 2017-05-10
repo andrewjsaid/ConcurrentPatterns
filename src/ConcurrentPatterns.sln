@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ajs.Concurrency", "Ajs.Concurrency\Ajs.Concurrency.csproj", "{0B41D3B1-A4E4-4DC3-970B-7E6875EDA080}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentPatterns", "ConcurrentPatterns\ConcurrentPatterns.csproj", "{0B41D3B1-A4E4-4DC3-970B-7E6875EDA080}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

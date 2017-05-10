@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ajs.Concurrency
+namespace ConcurrentPatterns
 {
     public class AsyncActionUnhandledExceptionEventArgs : EventArgs
     {
