@@ -17,6 +17,7 @@ namespace ConcurrentPatterns
 
 		public TimeLock(TimeSpan lockDuration)
 		{
+            if(lockDuration < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(lockDuration));
 			LockDuration = lockDuration;
 		}
 
